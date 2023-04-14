@@ -60,6 +60,7 @@
             font-size: larger;
             margin: 3em;
         }
+
         #divIzquierda,
         #divDerecha {
             width: 49%;
@@ -112,16 +113,9 @@
             font-size: 250%;
         }
 
-        #info-duracion {
-            font-size: 150%;
-        }
-        .HoraActual {
-            margin-top: 2em;
-            font-size: 3em;
-        }
 
         #Quedan {
-            font-size: 4em;
+            font-size: 8em;
         }
 
 
@@ -169,52 +163,58 @@
             fase: null,
             segundos_totales: null,
             segundos_pasados: null,
-            temporizador: null, 
+            temporizador: null,
             alertar: 20,
-            setDebateSegundosTotales: function() {
-                let d=DEBATE.duracion
-                let mult=0
-                ++mult; if( d=="00:30" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="01:00" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="01:30" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="02:00" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="02:30" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="03:00" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="03:30" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="04:00" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="04:30" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="05:00" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="05:30" ) DEBATE.segundos_totales=30*mult;
-                ++mult; if( d=="06:00" ) DEBATE.segundos_totales=30*mult;
+            estado: "",
+            setDebateSegundosTotales: function () {
+                let d = DEBATE.duracion
+                let mult = 0
+                ++mult; if (d == "00:30") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "01:00") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "01:30") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "02:00") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "02:30") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "03:00") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "03:30") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "04:00") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "04:30") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "05:00") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "05:30") DEBATE.segundos_totales = 30 * mult;
+                ++mult; if (d == "06:00") DEBATE.segundos_totales = 30 * mult;
             },
-            incrementaSegundosPasados: function() {
-                if( DEBATE.segundos_pasados<DEBATE.segundos_totales) {
+            incrementaSegundosPasados: function () {
+                if (DEBATE.segundos_pasados < DEBATE.segundos_totales) {
                     ++DEBATE.segundos_pasados;
                     return true;
                 }
+                DEBATE.detenerTemporizador()
                 return false;
+            },
+            detenerTemporizador: function() {
+                if ( DEBATE.temporizador ) {
+                    clearInterval( DEBATE.temporizador )
+                    DEBATE.temporizador=null
+                }
             }
         }
-        var firstTime = true;
+        let firstTime = true;
 
-        function timers() {
-            
-            DEBATE.incrementaSegundosPasados();
 
-            let dif =  DEBATE.segundos_totales-DEBATE.segundos_pasados
+        function cerear(numero) {
+            return (numero < 10 ? "0" : "") + numero
+        }
+
+        function escribeResultados() {
+            let dif = DEBATE.segundos_totales - DEBATE.segundos_pasados
             //Calculamos el porcentaje para la barra de progreso
             var porc = Math.trunc(100 * (DEBATE.segundos_pasados / DEBATE.segundos_totales) + 0.5);
             porc = (porc > 100) ? 100 : porc;
-
-            //console.log( "Dif: ", dif )
 
             // Escribimos resultados
             if (!isNaN(dif)) {
                 var minutos = Math.trunc(dif / 60);
                 var segundos = Math.trunc(dif % 60);
-                var msje = ((dif > 0) ? "" : "")
-                    + ((minutos != 0) ? (Math.abs(minutos) + ":") : "")
-                    + (Math.abs(segundos));
+                var msje = cerear(Math.abs(minutos)) + ":" + cerear(Math.abs(segundos))
                 if (minutos <= 0 && segundos <= DEBATE.alertar) {
                     $("#Quedan").css("color", "red");
                     $("#PorcProgress").addClass("progress-bar-danger");
@@ -231,9 +231,12 @@
 
             $("#PorcProgress").css("width", porc + "%");
             $("#Porcentaje").html(porc);
-            console.log( porc )
             $("#Quedan").html(msje);
-            $("#MostrarComentarios").html($('#Comentarios').val());
+        }
+
+        function timers() {
+            DEBATE.incrementaSegundosPasados()
+            escribeResultados()
         }
 
         function initTimers(millisecs) {
@@ -245,52 +248,69 @@
             }
             DEBATE.temporizador = setInterval(timers, millisecs);
         }
+
+        function ocultar_revelar_opciones() {
+            if ($('#divIzquierda').is(':hidden')) {
+                $('#titulo').html("Reloj para debates");
+                $('#divDerecha').css('width', '49%');
+                $('#divIzquierda').fadeIn();
+                $('#datos').fadeOut();
+                $('#iconMostrar').removeClass("glyphicon-forward")
+                    .addClass("glyphicon-backward");
+                $("body").removeClass("contraste");
+            } else {
+                $('#titulo').html("Exposición "+DEBATE.estado);
+                $('#divDerecha').css('width', '100%');
+                $('#divIzquierda').fadeOut();
+                $('#datos').fadeIn();
+                $('#iconMostrar').addClass("glyphicon-forward")
+                    .removeClass("glyphicon-backward");
+                $("body").addClass("contraste");
+            }
+        }
     </script>
     <script>
         $(function () {
-            $("#ocultar").click(function () {
-                if ($('#divIzquierda').is(':hidden')) {
-                    $('#titulo').html("Reloj para exámenes");
-                    $('#divDerecha').css('width', '49%');
-                    $('#divIzquierda').fadeIn();
-                    $('#datos').fadeOut();
-                    $('#iconMostrar').removeClass("glyphicon-forward")
-                        .addClass("glyphicon-backward");
-                    $("body").removeClass("contraste");
-                } else {
-                    $('#titulo').html($('#Asignatura').val() + ", de " + $('#HoraInicio').val() + " a " + $('#HoraFin').val());
-                    $('#divDerecha').css('width', '100%');
-                    $('#divIzquierda').fadeOut();
-                    $('#datos').fadeIn();
-                    $('#iconMostrar').addClass("glyphicon-forward")
-                        .removeClass("glyphicon-backward");
-                    $("body").addClass("contraste");
-
-
-                }
-            });
+            $("#ocultar").click(ocultar_revelar_opciones);
 
 
             $(".btn.fase").click(function () {
                 DEBATE.fase = this.value
-                $("#info-fase").html( DEBATE.fase )
+                $("#info-fase").html(DEBATE.fase)
             });
 
             $(".btn.duracion").click(function () {
                 DEBATE.duracion = this.value
                 DEBATE.setDebateSegundosTotales()
-                $("#info-duracion").html( DEBATE.duracion )
+                $("#info-duracion").html(DEBATE.duracion)
+                escribeResultados()
             });
 
-            $("#btn-iniciar").click(function() {
-                initTimers( )
-                console.log( "Temporizador iniciado" )
-
+            $("#btn-iniciar").click(function () {
+                if( DEBATE.temporizador) {
+                    alert( "Ya hay un temporizador en marcha")
+                    return;
+                }
+                if( !DEBATE.fase ) {
+                    alert( "Ha olvidado indicar qué fase del debate va a iniciar" )
+                    return
+                }
+                if( !DEBATE.duracion ) {
+                    alert( "Ha olvidado indicar qué duración tiene esta fase del debate" )
+                    return
+                }
+                if( DEBATE.segundos_pasados>=DEBATE.segundos_totales ) {
+                    alert( "No queda tiempo dispoible para esta fase del debate" )
+                    return
+                }
+                DEBATE.estado=" en desarollo"
+                ocultar_revelar_opciones()
+                $("#btn-iniciar").prop( "disabled", true)
+                initTimers()
             })
 
-            $("#btn-detener").click(function() {
-                clearInterval( DEBATE.temporizador )
-                console.log( "Temporizador detenido" )
+            $("#btn-detener").click(function () {
+                DEBATE.detenerTemporizador();
             })
         });</script>
 </head>
@@ -336,8 +356,11 @@
         </form>
     </div>
     <div id="divDerecha">
-        <div id="info-fase">Fase por determinar</div>
-        <div id="info-duracion">Duración por determinar</div>
+        <div>
+            <span id="info-fase">Fase por determinar</span>
+            <b>| Tiempo asignado: </b>
+            <span id="info-duracion">por determinar</span>
+        </div>
         <div id="Quedan"></div>
         <div class="progress" style="width: 70%; margin: 0 auto;">
             <div class="progress-bar" role="progressbar" id="PorcProgress" aria-valuenow="0" aria-valuemin="0"
