@@ -108,6 +108,13 @@
             font-size: 120%;
         }
 
+        #info-fase {
+            font-size: 250%;
+        }
+
+        #info-duracion {
+            font-size: 150%;
+        }
         .HoraActual {
             margin-top: 2em;
             font-size: 3em;
@@ -232,6 +239,7 @@
                 + moment.getFullYear();
 
         }
+
     </script>
     <script>
         $(function () {
@@ -291,9 +299,19 @@
 
                 }
             });
-            getParams();
-            writeParams();
-            initTimers(2000);
+
+
+            $(".btn.fase").click(function () {
+                DEBATE.fase = this.value
+                $("#info-fase").html( DEBATE.fase )
+            });
+
+            $(".btn.duracion").click(function () {
+                DEBATE.duracion = this.value
+                $("#info-duracion").html( DEBATE.duracion )
+            });
+
+            //initTimers(2000);
         });</script>
 </head>
 
@@ -308,38 +326,38 @@
             <div>
                 <h3>Fases</h3>
                 <div class="fases intro">
-                    <input type="button" class="btn btn-primary" value="Introducción A" />
-                    <input type="button" class="btn btn-primary" value="Introducción B" />
+                    <input type="button" class="btn btn-primary fase" value="Introducción A" />
+                    <input type="button" class="btn btn-primary fase" value="Introducción B" />
                 </div>
                 <div class="fases refutacion">
-                    <input type="button" class="btn btn-primary" value="Refutación 1 A" />
-                    <input type="button" class="btn btn-primary" value="Refutación 1 B" />
-                    <input type="button" class="btn btn-primary" value="Refutación 2 A" />
-                    <input type="button" class="btn btn-primary" value="Refutación 2 B" />
+                    <input type="button" class="btn btn-primary fase" value="Refutación 1 A" />
+                    <input type="button" class="btn btn-primary fase" value="Refutación 1 B" />
+                    <input type="button" class="btn btn-primary fase" value="Refutación 2 A" />
+                    <input type="button" class="btn btn-primary fase" value="Refutación 2 B" />
                 </div>
                 <div class="fases conclusion">
-                    <input type="button" class="btn btn-primary" value="Conclusión A" />
-                    <input type="button" class="btn btn-primary" value="Conclusión B" />
+                    <input type="button" class="btn btn-primary fase" value="Conclusión A" />
+                    <input type="button" class="btn btn-primary fase" value="Conclusión B" />
                 </div>
             </div>
             <div>
                 <h3>Duración</h3>
                 <div class="duracion">
-                    <input type="button" class="btn btn-primary" value="00:30" />
-                    <input type="button" class="btn btn-primary" value="01:00" />
-                    <input type="button" class="btn btn-primary" value="01:30" />
-                    <input type="button" class="btn btn-primary" value="02:00" />
-                    <input type="button" class="btn btn-primary" value="02:30" />
-                    <input type="button" class="btn btn-primary" value="03:00" />
-                    <input type="button" class="btn btn-primary" value="03:30" />
-                    <input type="button" class="btn btn-primary" value="04:00" />
+                    <input type="button" class="btn btn-primary duracion" value="00:30" />
+                    <input type="button" class="btn btn-primary duracion" value="01:00" />
+                    <input type="button" class="btn btn-primary duracion" value="01:30" />
+                    <input type="button" class="btn btn-primary duracion" value="02:00" />
+                    <input type="button" class="btn btn-primary duracion" value="02:30" />
+                    <input type="button" class="btn btn-primary duracion" value="03:00" />
+                    <input type="button" class="btn btn-primary duracion" value="03:30" />
+                    <input type="button" class="btn btn-primary duracion" value="04:00" />
                 </div>
             </div>
         </form>
     </div>
     <div id="divDerecha">
-        <div class="info-fase"></div>
-        <div class="info-duracion"></div>
+        <div id="info-fase">Fase por determinar</div>
+        <div id="info-duracion">Duración por determinar</div>
         <div class="progress" style="width: 70%; margin: 0 auto;">
             <div class="progress-bar" role="progressbar" id="PorcProgress" aria-valuenow="0" aria-valuemin="0"
                 aria-valuemax="100" style="min-width: 2em;">
@@ -351,6 +369,7 @@
             <input type="button" class="btn btn-primary opcion-destacada" value="Detener">
         </div>
     </div>
+
 </body>
 
 </html>
