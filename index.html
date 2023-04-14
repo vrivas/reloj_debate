@@ -163,42 +163,62 @@
 
     <script>
 
+        // Objeto con los valores que se están usando
+        let DEBATE = {
+            duracion: null,
+            fase: null,
+            segundos_totales: null,
+            segundos_pasados: null,
+            temporizador: null, 
+            alertar: 20,
+            setDebateSegundosTotales: function() {
+                let d=DEBATE.duracion
+                let mult=0
+                ++mult; if( d=="00:30" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="01:00" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="01:30" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="02:00" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="02:30" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="03:00" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="03:30" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="04:00" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="04:30" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="05:00" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="05:30" ) DEBATE.segundos_totales=30*mult;
+                ++mult; if( d=="06:00" ) DEBATE.segundos_totales=30*mult;
+            },
+            incrementaSegundosPasados: function() {
+                if( DEBATE.segundos_pasados<DEBATE.segundos_totales) {
+                    ++DEBATE.segundos_pasados;
+                    return true;
+                }
+                return false;
+            }
+        }
         var firstTime = true;
 
         function timers() {
-            var now = new Date();
-            var end = new Date();
-            var init = new Date();
-            now.setSeconds(0, 0);
+            
+            DEBATE.incrementaSegundosPasados();
 
-            init.setHours(eval($("#HoraInicio").val().split(":")[0]));
-            init.setMinutes(eval($("#HoraInicio").val().split(":")[1]));
-            init.setSeconds(0, 0);
-
-            end.setHours(eval($("#HoraFin").val().split(":")[0]));
-            end.setMinutes(eval($("#HoraFin").val().split(":")[1]));
-            end.setSeconds(0);
-
-            // Diferencia en segundos entre la hora actual y la de final
-            var dif = Math.trunc((end - now) / 60000);
-
+            let dif =  DEBATE.segundos_totales-DEBATE.segundos_pasados
             //Calculamos el porcentaje para la barra de progreso
-            var porc = Math.trunc(100 * (now - init) / (end - init) + 0.5);
+            var porc = Math.trunc(100 * (DEBATE.segundos_pasados / DEBATE.segundos_totales) + 0.5);
             porc = (porc > 100) ? 100 : porc;
 
+            //console.log( "Dif: ", dif )
 
             // Escribimos resultados
             if (!isNaN(dif)) {
-                var horas = Math.trunc(dif / 60);
-                var minutos = Math.trunc(dif % 60);
-                var msje = ((dif > 0) ? "Quedan " : "El tiempo acabó hace ")
-                    + ((horas != 0) ? (Math.abs(horas) + " horas y ") : "")
-                    + (Math.abs(minutos)) + " minutos";
-                if (horas <= 0 && minutos <= 10) {
+                var minutos = Math.trunc(dif / 60);
+                var segundos = Math.trunc(dif % 60);
+                var msje = ((dif > 0) ? "" : "")
+                    + ((minutos != 0) ? (Math.abs(minutos) + ":") : "")
+                    + (Math.abs(segundos));
+                if (minutos <= 0 && segundos <= DEBATE.alertar) {
                     $("#Quedan").css("color", "red");
                     $("#PorcProgress").addClass("progress-bar-danger");
                 } else {
-
                     $("#Quedan").css("color", "inherit");
                     $("#PorcProgress").removeClass("progress-bar-danger");
                 }
@@ -209,75 +229,25 @@
             }
 
 
-            $("#HoraActual").html(showHoursMinutes(now))
             $("#PorcProgress").css("width", porc + "%");
             $("#Porcentaje").html(porc);
+            console.log( porc )
             $("#Quedan").html(msje);
             $("#MostrarComentarios").html($('#Comentarios').val());
         }
 
         function initTimers(millisecs) {
-            millisecs = (typeof millisecs == 'undefined') ? 1000 : millisecs;
+            millisecs = (typeof millisecs == 'undefined') ? 1500 : millisecs;
+            DEBATE.segundos_pasados = 0
             if (firstTime) {
                 timers();
                 firstTime = false;
             }
-            setInterval(timers, millisecs);
+            DEBATE.temporizador = setInterval(timers, millisecs);
         }
-
-        function showHoursMinutes(moment) {
-            return (((tmp = moment.getHours()) < 10) ? "0" : "") + tmp
-                + ":"
-                + (((tmp = moment.getMinutes()) < 10) ? "0" : "") + tmp;
-
-        }
-        function showDayMonthYear(moment) {
-            return (((tmp = moment.getDate()) < 10) ? "0" : "") + tmp
-                + "-"
-                + (((tmp = moment.getMonth() + 1) < 10) ? "0" : "") + tmp
-                + "-"
-                + moment.getFullYear();
-
-        }
-
     </script>
     <script>
         $(function () {
-            /*$("#Ahora").click(function () {
-             var now = new Date();
-             var tmp;
-             var toShow = (((tmp = now.getHours()) < 10) ? "0" : "") + tmp
-             + ":"
-             + (((tmp = now.getMinutes()) < 10) ? "0" : "") + tmp;
-             $("#HoraInicio").val(toShow);
-             });*/
-            $("#Ahora").change(function () {
-                if (this.value) {
-                    var now = new Date();
-                    $("#HoraInicio").val(showHoursMinutes(now));
-
-                    now.setMinutes(now.getMinutes() + eval(this.value));
-                    $("#HoraFin").val(showHoursMinutes(now));
-                }
-            });
-            $("#HoraInicio").blur(function () {
-                var tmp = this.value.toUpperCase();
-                this.value = (tmp == "AHORA" || tmp == "'AHORA'" || tmp == "\"AHORA\"") ? showHoursMinutes(new Date()) : this.value;
-            });
-            $("#Fecha").blur(function () {
-                var tmp = this.value.toUpperCase();
-                this.value = (tmp == "HOY" || tmp == "'HOY'" || tmp == "\"HOY\"") ? showDayMonthYear(new Date()) : this.value;
-            });
-
-            $("#HoraFin").blur(function () {
-                if (this.value.indexOf(":") != -1)
-                    return;
-                var minutes = eval(this.value);
-                var now = new Date();
-                now.setMinutes(now.getMinutes() + minutes);
-                this.value = showHoursMinutes(now);
-            });
-
             $("#ocultar").click(function () {
                 if ($('#divIzquierda').is(':hidden')) {
                     $('#titulo').html("Reloj para exámenes");
@@ -308,10 +278,20 @@
 
             $(".btn.duracion").click(function () {
                 DEBATE.duracion = this.value
+                DEBATE.setDebateSegundosTotales()
                 $("#info-duracion").html( DEBATE.duracion )
             });
 
-            //initTimers(2000);
+            $("#btn-iniciar").click(function() {
+                initTimers( )
+                console.log( "Temporizador iniciado" )
+
+            })
+
+            $("#btn-detener").click(function() {
+                clearInterval( DEBATE.temporizador )
+                console.log( "Temporizador detenido" )
+            })
         });</script>
 </head>
 
@@ -358,6 +338,7 @@
     <div id="divDerecha">
         <div id="info-fase">Fase por determinar</div>
         <div id="info-duracion">Duración por determinar</div>
+        <div id="Quedan"></div>
         <div class="progress" style="width: 70%; margin: 0 auto;">
             <div class="progress-bar" role="progressbar" id="PorcProgress" aria-valuenow="0" aria-valuemin="0"
                 aria-valuemax="100" style="min-width: 2em;">
@@ -365,8 +346,8 @@
             </div>
         </div>
         <div class="opciones-principales">
-            <input type="button" class="btn btn-primary opcion-destacada" value="Iniciar">
-            <input type="button" class="btn btn-primary opcion-destacada" value="Detener">
+            <input type="button" id="btn-iniciar" class="btn btn-primary opcion-destacada" value="Iniciar">
+            <input type="button" id="btn-detener" class="btn btn-primary opcion-destacada" value="Detener">
         </div>
     </div>
 
