@@ -72,6 +72,18 @@
             margin: 1em;
         }
 
+        .blink_me {
+            animation: blinker 3s linear infinite;
+            color: orange;
+        }
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+                color: orange;
+            }
+        }
+
         #divIzquierda {
             float: left;
         }
@@ -183,6 +195,7 @@
                 ++mult; if (d == "06:00") DEBATE.segundos_totales = 30 * mult;
             },
             incrementaSegundosPasados: function () {
+                if (DEBATE.estado == "EN PAUSA") return true;
                 if (DEBATE.segundos_pasados < DEBATE.segundos_totales) {
                     ++DEBATE.segundos_pasados;
                     return true;
@@ -190,11 +203,85 @@
                 DEBATE.detenerTemporizador()
                 return false;
             },
-            detenerTemporizador: function() {
-                if ( DEBATE.temporizador ) {
-                    clearInterval( DEBATE.temporizador )
-                    DEBATE.temporizador=null
+            detenerTemporizador: function () {
+                if (DEBATE.temporizador) {
+                    clearInterval(DEBATE.temporizador)
+                    DEBATE.temporizador = null
                 }
+                this.segundos_pasados = this.segundos_totales = 0
+                $("#Quedan").removeClass("blink_me ")
+                escribeResultados()
+                this.setEstado_configurando()
+            },
+            setEstado_configurando: function () {
+                this.estado = "CONFIGURANDO"
+                deshabilita_botones()
+                habilita_botones_configuracion()
+                revelar_opciones()
+            },
+            setEstado_comprobarIniciar: function () {
+                this.estado = "COMPROBAR INICIAR"
+                if (DEBATE.fase != null && DEBATE.duracion != null) {
+                    this.setEstado_listoIniciar()
+                    return
+                }
+                deshabilita_botones()
+                habilita_botones_configuracion()
+            },
+            setEstado_listoIniciar: function () {
+                this.estado = "LISTO PARA INICIAR"
+
+                if (DEBATE.fase == null || DEBATE.duracion == null) {
+                    this.setEstado_configurando()
+                    return
+                }
+                deshabilita_botones()
+                habilita_botones_configuracion()
+                habilita_botones_iniciar()
+                set_titulo()
+            },
+            setEstado_enDesarrollo: function () {
+                let estadoAnterior = DEBATE.estado
+                if (DEBATE.fase == null || DEBATE.duracion == null) {
+                    this.setEstado_configurando()
+                    return
+                }
+                if (DEBATE.temporizador && estadoAnterior != "EN PAUSA") {
+                    alert("Ya hay un temporizador en marcha")
+                    return;
+                }
+                if (DEBATE.segundos_pasados >= DEBATE.segundos_totales) {
+                    alert("No queda tiempo dispoible para esta fase del debate")
+                    return
+                }
+                this.estado = "EN DESARROLLO"
+                deshabilita_botones()
+                ocultar_opciones()
+                habilita_botones_pausar()
+                habilita_botones_detener()
+                $("#Quedan").removeClass("blink_me")
+
+                if (estadoAnterior != "EN PAUSA") initTimers()
+                set_titulo()
+            }
+            , setEstado_enPausa: function () {
+                if (DEBATE.fase == null || DEBATE.duracion == null) {
+                    this.setEstado_configurando()
+                    return
+                }
+                if (DEBATE.estado != "EN DESARROLLO") return
+
+
+                if (DEBATE.segundos_pasados >= DEBATE.segundos_totales) {
+                    alert("No queda tiempo disponible para pausar el debate")
+                    return
+                }
+                this.estado = "EN PAUSA"
+                deshabilita_botones()
+                habilita_botones_continuar()
+                habilita_botones_detener()
+                $("#Quedan").addClass("blink_me")
+                set_titulo()
             }
         }
         let firstTime = true;
@@ -202,6 +289,29 @@
 
         function cerear(numero) {
             return (numero < 10 ? "0" : "") + numero
+        }
+
+        function deshabilita_botones() {
+            $("input[type='button']").prop("disabled", true)
+        }
+
+        function habilita_botones_configuracion() {
+            $("input[type='button'].fase").prop("disabled", false)
+            $("input[type='button'].duracion").prop("disabled", false)
+        }
+        function habilita_botones_iniciar() {
+            $("#btn-iniciar").prop("disabled", false)
+        }
+
+        function habilita_botones_continuar() {
+            $("#btn-continuar").prop("disabled", false)
+        }
+
+        function habilita_botones_pausar() {
+            $("#btn-pausar").prop("disabled", false)
+        }
+        function habilita_botones_detener() {
+            $("#btn-detener").prop("disabled", false)
         }
 
         function escribeResultados() {
@@ -249,6 +359,30 @@
             DEBATE.temporizador = setInterval(timers, millisecs);
         }
 
+        function set_titulo() {
+            $('#titulo').html("Reloj para debates: " + DEBATE.estado);
+        }
+
+        function ocultar_opciones() {
+            set_titulo()
+            $('#divDerecha').css('width', '100%');
+            $('#divIzquierda').fadeOut();
+            $('#datos').fadeIn();
+            $('#iconMostrar').addClass("glyphicon-forward")
+                .removeClass("glyphicon-backward");
+            $("body").addClass("contraste");
+        }
+
+        function revelar_opciones() {
+            set_titulo()
+            $('#divDerecha').css('width', '49%');
+            $('#divIzquierda').fadeIn();
+            $('#datos').fadeOut();
+            $('#iconMostrar').removeClass("glyphicon-forward")
+                .addClass("glyphicon-backward");
+            $("body").removeClass("contraste");
+        }
+
         function ocultar_revelar_opciones() {
             if ($('#divIzquierda').is(':hidden')) {
                 $('#titulo').html("Reloj para debates");
@@ -259,7 +393,7 @@
                     .addClass("glyphicon-backward");
                 $("body").removeClass("contraste");
             } else {
-                $('#titulo').html("Exposición "+DEBATE.estado);
+                $('#titulo').html("Exposición " + DEBATE.estado);
                 $('#divDerecha').css('width', '100%');
                 $('#divIzquierda').fadeOut();
                 $('#datos').fadeIn();
@@ -276,42 +410,32 @@
 
             $(".btn.fase").click(function () {
                 DEBATE.fase = this.value
+                DEBATE.setEstado_comprobarIniciar()
                 $("#info-fase").html(DEBATE.fase)
             });
 
             $(".btn.duracion").click(function () {
                 DEBATE.duracion = this.value
                 DEBATE.setDebateSegundosTotales()
+                DEBATE.setEstado_comprobarIniciar()
                 $("#info-duracion").html(DEBATE.duracion)
                 escribeResultados()
             });
 
-            $("#btn-iniciar").click(function () {
-                if( DEBATE.temporizador) {
-                    alert( "Ya hay un temporizador en marcha")
-                    return;
-                }
-                if( !DEBATE.fase ) {
-                    alert( "Ha olvidado indicar qué fase del debate va a iniciar" )
-                    return
-                }
-                if( !DEBATE.duracion ) {
-                    alert( "Ha olvidado indicar qué duración tiene esta fase del debate" )
-                    return
-                }
-                if( DEBATE.segundos_pasados>=DEBATE.segundos_totales ) {
-                    alert( "No queda tiempo dispoible para esta fase del debate" )
-                    return
-                }
-                DEBATE.estado=" en desarollo"
-                ocultar_revelar_opciones()
-                $("#btn-iniciar").prop( "disabled", true)
-                initTimers()
+            $("#btn-iniciar,#btn-continuar").click(function () {
+                DEBATE.setEstado_enDesarrollo()
+            })
+
+            $("#btn-pausar").click(function () {
+                DEBATE.setEstado_enPausa()
+
             })
 
             $("#btn-detener").click(function () {
                 DEBATE.detenerTemporizador();
             })
+
+            DEBATE.setEstado_configurando()
         });</script>
 </head>
 
@@ -332,6 +456,8 @@
                 <div class="fases refutacion">
                     <input type="button" class="btn btn-primary fase" value="Refutación 1 A" />
                     <input type="button" class="btn btn-primary fase" value="Refutación 1 B" />
+                </div>
+                <div class="fases refutacion">
                     <input type="button" class="btn btn-primary fase" value="Refutación 2 A" />
                     <input type="button" class="btn btn-primary fase" value="Refutación 2 B" />
                 </div>
@@ -346,6 +472,8 @@
                     <input type="button" class="btn btn-primary duracion" value="00:30" />
                     <input type="button" class="btn btn-primary duracion" value="01:00" />
                     <input type="button" class="btn btn-primary duracion" value="01:30" />
+                </div>
+                <div class="duracion">
                     <input type="button" class="btn btn-primary duracion" value="02:00" />
                     <input type="button" class="btn btn-primary duracion" value="02:30" />
                     <input type="button" class="btn btn-primary duracion" value="03:00" />
@@ -370,6 +498,8 @@
         </div>
         <div class="opciones-principales">
             <input type="button" id="btn-iniciar" class="btn btn-primary opcion-destacada" value="Iniciar">
+            <input type="button" id="btn-pausar" class="btn btn-primary opcion-destacada" value="Pausar">
+            <input type="button" id="btn-continuar" class="btn btn-primary opcion-destacada" value="Continuar">
             <input type="button" id="btn-detener" class="btn btn-primary opcion-destacada" value="Detener">
         </div>
     </div>
