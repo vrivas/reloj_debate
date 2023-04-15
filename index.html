@@ -47,6 +47,9 @@
             margin-right: 1em;
         }
 
+        #audio {
+            display: none;
+        }
         .fases,
         .duracion {
             margin: 1em;
@@ -212,6 +215,8 @@
                 }
                 this.segundos_pasados = this.segundos_totales = 0
                 $("#Quedan").removeClass("blink_me ")
+                var audio = document.getElementById("audio");
+                audio.play();
                 escribeResultados()
                 this.setEstado_configurando()
             },
@@ -512,6 +517,9 @@
         </div>
     </div>
 
+    <audio id="audio" controls>
+        <source type="audio/wav" src="timbre.mp3">
+        </audio>
 </body>
 
 </html>
