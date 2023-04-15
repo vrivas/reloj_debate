@@ -350,7 +350,7 @@
         }
 
         function initTimers(millisecs) {
-            millisecs = (typeof millisecs == 'undefined') ? 1500 : millisecs;
+            millisecs = (typeof millisecs == 'undefined') ? 1000 : millisecs;
             DEBATE.segundos_pasados = 0
             if (firstTime) {
                 timers();
