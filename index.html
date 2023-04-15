@@ -176,9 +176,11 @@
             segundos_totales: null,
             segundos_pasados: null,
             temporizador: null,
-            alertar: 20,
+            alertar_1: 20,
+            alertar_2: 10,
             estado: "",
             setDebateSegundosTotales: function () {
+                if (!DEBATE.duracion) return
                 let d = DEBATE.duracion
                 let mult = 0
                 ++mult; if (d == "00:30") DEBATE.segundos_totales = 30 * mult;
@@ -325,8 +327,11 @@
                 var minutos = Math.trunc(dif / 60);
                 var segundos = Math.trunc(dif % 60);
                 var msje = cerear(Math.abs(minutos)) + ":" + cerear(Math.abs(segundos))
-                if (minutos <= 0 && segundos <= DEBATE.alertar) {
+                if (dif <= DEBATE.alertar_2) {
                     $("#Quedan").css("color", "red");
+                    $("#PorcProgress").addClass("progress-bar-danger");
+                } else if (dif <= DEBATE.alertar_1) {
+                    $("#Quedan").css("color", "orange");
                     $("#PorcProgress").addClass("progress-bar-danger");
                 } else {
                     $("#Quedan").css("color", "inherit");
@@ -410,8 +415,11 @@
 
             $(".btn.fase").click(function () {
                 DEBATE.fase = this.value
+                DEBATE.setDebateSegundosTotales()
                 DEBATE.setEstado_comprobarIniciar()
                 $("#info-fase").html(DEBATE.fase)
+                escribeResultados()
+
             });
 
             $(".btn.duracion").click(function () {
